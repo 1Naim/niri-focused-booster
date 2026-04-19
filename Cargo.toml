@@ -1,0 +1,8 @@
+[package]
+name = "niri-focused-booster"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+niri-ipc = { git = "https://github.com/niri-wm/niri" }
+zbus = "5.14.0"
