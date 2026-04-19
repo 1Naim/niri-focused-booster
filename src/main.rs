@@ -60,45 +60,39 @@ fn main() -> Result<(), Box<dyn Error>> {
 
     let mut focused_dmem_low_path: Option<PathBuf> = None;
     let mut windows = WindowsState::default();
-    let mut new_focused_path;
 
     let mut read_event = event_socket.read_events();
     while let Ok(event) = read_event() {
         windows.apply(event.clone());
 
-        match event {
-            Event::WindowFocusChanged { id } => {
-                new_focused_path = id
-                    .and_then(|window_id| windows.windows.get(&window_id))
-                    .and_then(|window| window.pid)
-                    .and_then(|pid| match dmem_low_path_for_pid(&conn, pid) {
-                        Ok(path) => Some(path),
-                        Err(error) => {
-                            eprintln!("WARNING: Failed to resolve cgroup for PID {pid}: {error}");
-                            None
-                        }
-                    });
+        let resolve_dmem_path = |pid| match dmem_low_path_for_pid(&conn, pid) {
+            Ok(path) => Some(path),
+            Err(error) => {
+                eprintln!("WARNING: Failed to resolve cgroup for PID {pid}: {error}");
+                None
             }
+        };
+
+        let new_focused_path = match event {
+            Event::WindowFocusChanged { id } => id
+                .and_then(|window_id| windows.windows.get(&window_id))
+                .and_then(|window| window.pid)
+                .and_then(resolve_dmem_path),
             Event::WindowOpenedOrChanged { window } => {
                 if !window.is_focused {
                     continue;
                 }
 
-                new_focused_path =
-                    window
-                        .pid
-                        .and_then(|pid| match dmem_low_path_for_pid(&conn, pid) {
-                            Ok(path) => Some(path),
-                            Err(error) => {
-                                eprintln!(
-                                    "WARNING: Failed to resolve cgroup for PID {pid}: {error}"
-                                );
-                                None
-                            }
-                        });
+                window.pid.and_then(resolve_dmem_path)
             }
+            Event::WindowsChanged { .. } => windows
+                .windows
+                .values()
+                .find(|window| window.is_focused)
+                .and_then(|window| window.pid)
+                .and_then(resolve_dmem_path),
             _ => continue,
-        }
+        };
 
         if focused_dmem_low_path == new_focused_path {
             continue;
