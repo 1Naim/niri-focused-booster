@@ -5,8 +5,7 @@ use zbus::blocking::{Connection, Proxy};
 use zbus::zvariant::OwnedObjectPath;
 
 pub fn get_control_group(
-    connection: &Connection,
-    unit_path: &OwnedObjectPath,
+    connection: &Connection, unit_path: &OwnedObjectPath,
 ) -> Result<Option<String>, Box<dyn Error>> {
     for iface_name in [
         "org.freedesktop.systemd1.Service",
@@ -15,12 +14,8 @@ pub fn get_control_group(
         "org.freedesktop.systemd1.Socket",
         "org.freedesktop.systemd1.Unit",
     ] {
-        let proxy = Proxy::new(
-            connection,
-            "org.freedesktop.systemd1",
-            unit_path.clone(),
-            iface_name,
-        )?;
+        let proxy =
+            Proxy::new(connection, "org.freedesktop.systemd1", unit_path.clone(), iface_name)?;
 
         let response: Result<String, zbus::Error> = proxy.get_property("ControlGroup");
 
@@ -46,10 +41,7 @@ pub fn dmem_low_path_for_pid(connection: &Connection, pid: i32) -> Result<PathBu
     let unit_path: OwnedObjectPath = manager.call("GetUnitByPID", &(pid,))?;
 
     let control_group = get_control_group(connection, &unit_path)?.ok_or_else(|| {
-        io::Error::new(
-            io::ErrorKind::NotFound,
-            format!("ControlGroup was missing for PID {pid}"),
-        )
+        io::Error::new(io::ErrorKind::NotFound, format!("ControlGroup was missing for PID {pid}"))
     })?;
 
     let mut path = PathBuf::from("/sys/fs/cgroup");

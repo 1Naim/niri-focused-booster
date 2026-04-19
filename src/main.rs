@@ -14,10 +14,7 @@ use zbus::blocking::Connection;
 fn main() -> Result<(), Box<dyn Error>> {
     let boosted_limits =
         parse_limits_file(Path::new("/sys/fs/cgroup/dmem.capacity")).ok_or_else(|| {
-            io::Error::new(
-                io::ErrorKind::NotFound,
-                "Failed to read /sys/fs/cgroup/dmem.capacity",
-            )
+            io::Error::new(io::ErrorKind::NotFound, "Failed to read /sys/fs/cgroup/dmem.capacity")
         })?;
 
     let non_boosted_limits: DmemLimit = boosted_limits.keys().map(|key| (key.clone(), 0)).collect();
@@ -28,7 +25,7 @@ fn main() -> Result<(), Box<dyn Error>> {
     let reply = event_socket.send(Request::EventStream)?;
     if let Err(message) = reply {
         return Err(
-            io::Error::other(format!("Failed to request niri event stream: {message}")).into(),
+            io::Error::other(format!("Failed to request niri event stream: {message}")).into()
         );
     }
 
@@ -48,10 +45,7 @@ fn main() -> Result<(), Box<dyn Error>> {
         if let Some(path) = focused_path.as_ref()
             && let Err(error) = set_dmem_low(path, &cleanup_non_boosted_limits)
         {
-            eprintln!(
-                "WARNING: Failed to cleanup dmem.low at {}: {error}",
-                path.display()
-            );
+            eprintln!("WARNING: Failed to cleanup dmem.low at {}: {error}", path.display());
             std::process::exit(1);
         }
 

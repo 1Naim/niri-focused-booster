@@ -1,0 +1,16 @@
+edition = "2024"
+fn_params_layout = "Compressed"
+fn_call_width = 100
+single_line_let_else_max_width = 0
+use_field_init_shorthand = true
+use_try_shorthand = true
+chain_width = 100
+# imports_layout = "Vertical"
+# indent_style = "Visual"
+# normalize_comments = true
+# normalize_doc_attributes = true
+# overflow_delimited_expr = true
+# reorder_impl_items = true
+# where_single_line = true
+# wrap_comments = true
+# comment_width = 100
