@@ -8,6 +8,7 @@ use niri_ipc::{Event, Request, socket::Socket};
 use std::error::Error;
 use std::io;
 use std::path::{Path, PathBuf};
+use std::sync::{Arc, Mutex};
 use zbus::blocking::Connection;
 
 fn main() -> Result<(), Box<dyn Error>> {
@@ -30,6 +31,32 @@ fn main() -> Result<(), Box<dyn Error>> {
             io::Error::other(format!("Failed to request niri event stream: {message}")).into(),
         );
     }
+
+    let focused_dmem_low_path_for_cleanup = Arc::new(Mutex::new(None::<PathBuf>));
+    let cleanup_focused_dmem_low_path = Arc::clone(&focused_dmem_low_path_for_cleanup);
+    let cleanup_non_boosted_limits = non_boosted_limits.clone();
+
+    ctrlc::set_handler(move || {
+        let focused_path = match cleanup_focused_dmem_low_path.lock() {
+            Ok(path) => path.clone(),
+            Err(error) => {
+                eprintln!("WARNING: Failed to lock focused dmem.low path during cleanup: {error}");
+                std::process::exit(1);
+            }
+        };
+
+        if let Some(path) = focused_path.as_ref()
+            && let Err(error) = set_dmem_low(path, &cleanup_non_boosted_limits)
+        {
+            eprintln!(
+                "WARNING: Failed to cleanup dmem.low at {}: {error}",
+                path.display()
+            );
+            std::process::exit(1);
+        }
+
+        std::process::exit(0);
+    })?;
 
     let mut focused_dmem_low_path: Option<PathBuf> = None;
     let mut windows = WindowsState::default();
@@ -98,6 +125,9 @@ fn main() -> Result<(), Box<dyn Error>> {
         }
 
         focused_dmem_low_path = new_focused_path;
+        if let Ok(mut path) = focused_dmem_low_path_for_cleanup.lock() {
+            *path = focused_dmem_low_path.clone();
+        }
     }
 
     Ok(())
