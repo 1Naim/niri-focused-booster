@@ -31,27 +31,47 @@ fn main() -> Result<(), Box<dyn Error>> {
         );
     }
 
-    let mut windows = WindowsState::default();
     let mut focused_dmem_low_path: Option<PathBuf> = None;
+    let mut windows = WindowsState::default();
+    let mut new_focused_path;
 
     let mut read_event = event_socket.read_events();
     while let Ok(event) = read_event() {
         windows.apply(event.clone());
 
-        let Event::WindowFocusChanged { id } = event else {
-            continue;
-        };
-
-        let new_focused_path = id
-            .and_then(|window_id| windows.windows.get(&window_id))
-            .and_then(|window| window.pid)
-            .and_then(|pid| match dmem_low_path_for_pid(&conn, pid) {
-                Ok(path) => Some(path),
-                Err(error) => {
-                    eprintln!("WARNING: Failed to resolve cgroup for PID {pid}: {error}");
-                    None
+        match event {
+            Event::WindowFocusChanged { id } => {
+                new_focused_path = id
+                    .and_then(|window_id| windows.windows.get(&window_id))
+                    .and_then(|window| window.pid)
+                    .and_then(|pid| match dmem_low_path_for_pid(&conn, pid) {
+                        Ok(path) => Some(path),
+                        Err(error) => {
+                            eprintln!("WARNING: Failed to resolve cgroup for PID {pid}: {error}");
+                            None
+                        }
+                    });
+            }
+            Event::WindowOpenedOrChanged { window } => {
+                if !window.is_focused {
+                    continue;
                 }
-            });
+
+                new_focused_path =
+                    window
+                        .pid
+                        .and_then(|pid| match dmem_low_path_for_pid(&conn, pid) {
+                            Ok(path) => Some(path),
+                            Err(error) => {
+                                eprintln!(
+                                    "WARNING: Failed to resolve cgroup for PID {pid}: {error}"
+                                );
+                                None
+                            }
+                        });
+            }
+            _ => continue,
+        }
 
         if focused_dmem_low_path == new_focused_path {
             continue;
