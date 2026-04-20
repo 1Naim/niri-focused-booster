@@ -18,7 +18,6 @@ pub fn get_control_group(
             Proxy::new(connection, "org.freedesktop.systemd1", unit_path.clone(), iface_name)?;
 
         let response: Result<String, zbus::Error> = proxy.get_property("ControlGroup");
-
         if let Ok(control_group) = response
             && !control_group.is_empty()
         {
@@ -39,12 +38,12 @@ pub fn dmem_low_path_for_pid(connection: &Connection, pid: i32) -> Result<PathBu
     )?;
 
     let unit_path: OwnedObjectPath = manager.call("GetUnitByPID", &(pid,))?;
+    let mut path = PathBuf::from("/sys/fs/cgroup");
 
     let control_group = get_control_group(connection, &unit_path)?.ok_or_else(|| {
         io::Error::new(io::ErrorKind::NotFound, format!("ControlGroup was missing for PID {pid}"))
     })?;
 
-    let mut path = PathBuf::from("/sys/fs/cgroup");
     let relative_control_group = control_group.trim_start_matches('/');
     if !relative_control_group.is_empty() {
         path.push(relative_control_group);

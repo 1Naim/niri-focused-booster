@@ -18,10 +18,9 @@ fn main() -> Result<(), Box<dyn Error>> {
         })?;
 
     let non_boosted_limits: DmemLimit = boosted_limits.keys().map(|key| (key.clone(), 0)).collect();
-
+    let mut event_socket = Socket::connect()?;
     let conn = Connection::session()?;
 
-    let mut event_socket = Socket::connect()?;
     let reply = event_socket.send(Request::EventStream)?;
     if let Err(message) = reply {
         return Err(

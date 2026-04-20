@@ -7,3 +7,6 @@ edition = "2024"
 ctrlc = { version = "3.5.2", features = ["termination"] }
 niri-ipc = { git = "https://github.com/niri-wm/niri" }
 zbus = "5.14.0"
+
+[profile.release]
+lto = "thin"
