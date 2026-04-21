@@ -16,26 +16,24 @@ at 0.
     - `linux-cachyos`
     - [`linux-dmemcg`](https://aur.archlinux.org/packages/linux-dmemcg)
 
+
+## Installing
+
+This project is available in the [AUR](https://aur.archlinux.org/packages). You can clone and build
+it manually or use your favourite AUR helper.
+
+```bash
+paru -S niri-focused-booster
+```
+
 ## Build
 
 ```bash
 cargo fetch --locked --target "$(rustc --print host-tuple)"
 cargo build --release --frozen
-```
 
-## Install
-
-```bash
 # This will install to ~/.cargo/bin
 cargo install --path .
-```
-
-Alternatively, you can build and install this tool with `pacman` if you are on an Arch-based
-distribution.
-
-```bash
-cd packaging
-makepkg -Ccsir
 ```
 
 ## Usage
