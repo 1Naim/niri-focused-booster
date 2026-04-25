@@ -457,7 +457,7 @@ dependencies = [
 
 [[package]]
 name = "niri-focused-booster"
-version = "0.2.0"
+version = "0.2.1"
 dependencies = [
  "ctrlc",
  "niri-ipc",
