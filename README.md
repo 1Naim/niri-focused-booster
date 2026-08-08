@@ -4,8 +4,9 @@
 prioritize GPU memory for the currently focused app on Niri.
 
 It listens to Niri focus events, resolves the focused window's PID to its cgroup, and updates that
-cgroup's memory protection limit. The focused app gets boosted limits while all other apps have it
-at 0.
+cgroup's memory protection limit. For Xwayland windows under `xwayland-satellite`, it resolves the
+focused X11 client PID via XRes so the boost is applied to the actual app process. The focused app
+gets boosted limits while all other apps have it at 0.
 
 ## Requirements
 

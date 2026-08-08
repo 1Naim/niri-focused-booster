@@ -1,5 +1,6 @@
 mod dbus;
 mod limits;
+mod x11;
 
 use dbus::*;
 use limits::*;
@@ -9,6 +10,7 @@ use std::error::Error;
 use std::io;
 use std::path::{Path, PathBuf};
 use std::sync::{Arc, Mutex};
+use x11::*;
 use zbus::blocking::Connection;
 
 fn main() -> Result<(), Box<dyn Error>> {
@@ -58,11 +60,15 @@ fn main() -> Result<(), Box<dyn Error>> {
     while let Ok(event) = read_event() {
         windows.apply(event.clone());
 
-        let resolve_dmem_path = |pid| match dmem_low_path_for_pid(&conn, pid) {
-            Ok(path) => Some(path),
-            Err(error) => {
-                eprintln!("WARNING: Failed to resolve cgroup for PID {pid}: {error}");
-                None
+        let resolve_dmem_path = |pid| {
+            let pid = find_real_pid(pid)?;
+
+            match dmem_low_path_for_pid(&conn, pid) {
+                Ok(path) => Some(path),
+                Err(error) => {
+                    eprintln!("WARNING: Failed to resolve cgroup for PID {pid}: {error}");
+                    None
+                }
             }
         };
 
