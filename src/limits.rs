@@ -32,11 +32,13 @@ pub fn parse_limits_file(path: &Path) -> Option<DmemLimit> {
 pub fn set_dmem_low(path: &Path, limits: &DmemLimit) -> io::Result<()> {
     let mut contents = String::new();
     for (device, limit) in limits {
+        contents.clear();
         contents.push_str(device);
         contents.push(' ');
-        contents.push_str(limit.to_string().as_str());
+        contents.push_str(&limit.to_string());
         contents.push('\n');
+        std::fs::write(path, &contents)?;
     }
 
-    std::fs::write(path, contents)
+    Ok(())
 }
