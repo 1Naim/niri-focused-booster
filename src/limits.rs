@@ -9,7 +9,7 @@ pub fn parse_limits_file(path: &Path) -> Option<DmemLimit> {
     if let Ok(str) = std::fs::read_to_string(path) {
         let mut limits = DmemLimit::new();
         for line in str.lines() {
-            let words: Vec<_> = line.split(' ').collect();
+            let words: Vec<_> = line.split_whitespace().collect();
             if words.len() != 2 {
                 eprintln!("WARNING: Unexpected dmem line: \"{line}\"");
                 continue;
